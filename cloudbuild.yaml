@@ -6,17 +6,17 @@ steps:
   # Step 1: Build and push Docker images for each microservice
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'src/adservice'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-repo/adservice:$(date +%Y%m%d%H%M%S)', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-docker-repo/adservice:$(date +%Y%m%d%H%M%S)', '.']
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'src/adservice'
-    args: ['push', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-repo/adservice:$(date +%Y%m%d%H%M%S)']
+    args: ['push', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-docker-repo/adservice:$(date +%Y%m%d%H%M%S)']
   # Repeat for other microservices
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'src/cartservice'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-repo/cartservice:$(date +%Y%m%d%H%M%S)', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-docker-repo/cartservice:$(date +%Y%m%d%H%M%S)', '.']
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'src/cartservice'
-    args: ['push', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-repo/cartservice:$(date +%Y%m%d%H%M%S)']
+    args: ['push', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-docker-repo/cartservice:$(date +%Y%m%d%H%M%S)']
   # Repeat for other microservices...
 
   # Step 2: Update Kubernetes manifests with new image tags
