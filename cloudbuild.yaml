@@ -1,6 +1,3 @@
-options:
-  logging: NONE
-
 steps:
 # Build and push all microservices
 - name: 'gcr.io/cloud-builders/docker'
@@ -152,6 +149,7 @@ substitutions:
 
 options:
   dynamic_substitutions: true
+  logging: NONE
 
 images:
 - '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/adservice:latest'
