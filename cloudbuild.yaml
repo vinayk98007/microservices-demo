@@ -1,47 +1,53 @@
 options:
   logging: NONE
 
-
 steps:
   # Step 1: Build and push Docker images for each microservice
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'src/adservice'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-docker-repo/adservice:$(date +%Y%m%d%H%M%S)', '.']
+    args:
+      - 'build'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/adservice:$(date +%Y%m%d%H%M%S)'
+      - '.'
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'src/adservice'
-    args: ['push', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-docker-repo/adservice:$(date +%Y%m%d%H%M%S)']
+    args:
+      - 'push'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/adservice:$(date +%Y%m%d%H%M%S)'
+
   # Repeat for other microservices
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'src/cartservice'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-docker-repo/cartservice:$(date +%Y%m%d%H%M%S)', '.']
+    args:
+      - 'build'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/cartservice:$(date +%Y%m%d%H%M%S)'
+      - '.'
   - name: 'gcr.io/cloud-builders/docker'
     dir: 'src/cartservice'
-    args: ['push', 'us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-docker-repo/cartservice:$(date +%Y%m%d%H%M%S)']
-  # Repeat for other microservices...
+    args:
+      - 'push'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/cartservice:$(date +%Y%m%d%H%M%S)'
 
   # Step 2: Update Kubernetes manifests with new image tags
   - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
     args:
-      - 'sed'
-      - '-i'
-      - '-e'
-      - 's|image: us-central1-docker.pkg.dev/.*/adservice:.*|image: us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-repo/adservice:$(date +%Y%m%d%H%M%S)|'
-      - 'kubernetes-manifests/adservice-deployment.yaml'
-  # Repeat for other microservices' deployment YAML files...
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-      - 'sed'
-      - '-i'
-      - '-e'
-      - 's|image: us-central1-docker.pkg.dev/.*/cartservice:.*|image: us-central1-docker.pkg.dev/peak-vortex-448111-j1/my-repo/cartservice:$(date +%Y%m%d%H%M%S)|'
-      - 'kubernetes-manifests/cartservice-deployment.yaml'
+      - '-c'
+      - |
+        sed -i -e "s|image: $_REGION-docker.pkg.dev/.*/adservice:.*|image: $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/adservice:$(date +%Y%m%d%H%M%S)|" kubernetes-manifests/adservice-deployment.yaml
+        sed -i -e "s|image: $_REGION-docker.pkg.dev/.*/cartservice:.*|image: $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/cartservice:$(date +%Y%m%d%H%M%S)|" kubernetes-manifests/cartservice-deployment.yaml
 
   # Step 3: Apply updated Kubernetes manifests
   - name: 'gcr.io/cloud-builders/kubectl'
-    args: ['apply', '-f', 'kubernetes-manifests']
+    args:
+      - 'apply'
+      - '-f'
+      - 'kubernetes-manifests'
     env:
       - 'CLOUDSDK_CONTAINER_CLUSTER=my-gke-cluster'
-      - 'CLOUDSDK_COMPUTE_ZONE=us-central1'
+      - 'CLOUDSDK_COMPUTE_ZONE=$_REGION'
 
 # Define the required substitutions (replace with actual values)
 substitutions:
