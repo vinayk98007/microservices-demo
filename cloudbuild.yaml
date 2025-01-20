@@ -2,61 +2,167 @@ options:
   logging: NONE
 
 steps:
-  # Step 1: Build and push Docker images for each microservice
-  - name: 'gcr.io/cloud-builders/docker'
-    dir: 'src/adservice'
-    args:
-      - 'build'
-      - '-t'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/adservice:$(date +%Y%m%d%H%M%S)'
-      - '.'
-  - name: 'gcr.io/cloud-builders/docker'
-    dir: 'src/adservice'
-    args:
-      - 'push'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/adservice:$(date +%Y%m%d%H%M%S)'
+# Build and push all microservices
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-adservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/adservice:latest',
+    '-f', 'src/adservice/Dockerfile',
+    'src/adservice'
+  ]
 
-  # Repeat for other microservices
-  - name: 'gcr.io/cloud-builders/docker'
-    dir: 'src/cartservice'
-    args:
-      - 'build'
-      - '-t'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/cartservice:$(date +%Y%m%d%H%M%S)'
-      - '.'
-  - name: 'gcr.io/cloud-builders/docker'
-    dir: 'src/cartservice'
-    args:
-      - 'push'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/cartservice:$(date +%Y%m%d%H%M%S)'
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-cartservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/cartservice:latest',
+    '-f', 'src/cartservice/Dockerfile',
+    'src/cartservice'
+  ]
 
-  # Step 2: Update Kubernetes manifests with new image tags
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        sed -i -e "s|image: $_REGION-docker.pkg.dev/.*/adservice:.*|image: $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/adservice:$(date +%Y%m%d%H%M%S)|" kubernetes-manifests/adservice-deployment.yaml
-        sed -i -e "s|image: $_REGION-docker.pkg.dev/.*/cartservice:.*|image: $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/cartservice:$(date +%Y%m%d%H%M%S)|" kubernetes-manifests/cartservice-deployment.yaml
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-checkoutservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/checkoutservice:latest',
+    '-f', 'src/checkoutservice/Dockerfile',
+    'src/checkoutservice'
+  ]
 
-  # Step 3: Apply updated Kubernetes manifests
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - 'apply'
-      - '-f'
-      - 'kubernetes-manifests'
-    env:
-      - 'CLOUDSDK_CONTAINER_CLUSTER=my-gke-cluster'
-      - 'CLOUDSDK_COMPUTE_ZONE=$_REGION'
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-currencyservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/currencyservice:latest',
+    '-f', 'src/currencyservice/Dockerfile',
+    'src/currencyservice'
+  ]
 
-# Define the required substitutions (replace with actual values)
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-emailservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/emailservice:latest',
+    '-f', 'src/emailservice/Dockerfile',
+    'src/emailservice'
+  ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-frontend'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/frontend:latest',
+    '-f', 'src/frontend/Dockerfile',
+    'src/frontend'
+  ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-loadgenerator'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/loadgenerator:latest',
+    '-f', 'src/loadgenerator/Dockerfile',
+    'src/loadgenerator'
+  ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-paymentservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/paymentservice:latest',
+    '-f', 'src/paymentservice/Dockerfile',
+    'src/paymentservice'
+  ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-productcatalogservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/productcatalogservice:latest',
+    '-f', 'src/productcatalogservice/Dockerfile',
+    'src/productcatalogservice'
+  ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-recommendationservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/recommendationservice:latest',
+    '-f', 'src/recommendationservice/Dockerfile',
+    'src/recommendationservice'
+  ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-shippingservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shippingservice:latest',
+    '-f', 'src/shippingservice/Dockerfile',
+    'src/shippingservice'
+  ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'build-shoppingassistantservice'
+  args: [
+    'build',
+    '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shoppingassistantservice:latest',
+    '-f', 'src/shoppingassistantservice/Dockerfile',
+    'src/shoppingassistantservice'
+  ]
+
+# Push all images to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'push-images'
+  args: ['push', '--all-tags', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/']
+
+# Update Kubernetes manifests with new image tags
+- name: 'gcr.io/cloud-builders/gke-deploy'
+  id: 'update-manifests'
+  args:
+  - prepare
+  - --filename=kubernetes-manifests
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/adservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/cartservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/checkoutservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/currencyservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/emailservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/frontend:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/loadgenerator:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/paymentservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/productcatalogservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/recommendationservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shippingservice:latest
+  - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shoppingassistantservice:latest
+  - --output=output
+
+# Deploy to GKE cluster (optional - uncomment if you want automatic deployment)
+# - name: 'gcr.io/cloud-builders/gke-deploy'
+#   args:
+#   - apply
+#   - --filename=output/expanded
+#   - --cluster=${_CLUSTER_NAME}
+#   - --location=${_CLUSTER_LOCATION}
+
 substitutions:
-  _REGION: 'us-central1'
-  _REPO: 'my-docker-repo'
+  _ARTIFACT_REGISTRY_LOCATION: 'us-central1'  # change this to your desired location
+  _REPOSITORY: 'my-docker-repo'                # change this to your repository name
+  _CLUSTER_NAME: 'my-gke-cluster'                 # change this if enabling GKE deployment
+  _CLUSTER_LOCATION: 'us-central1'            # change this if enabling GKE deployment
 
-# Specify artifacts to store the updated YAML files (optional)
-artifacts:
-  objects:
-    location: 'gs://$PROJECT_ID-cloudbuild-artifacts/'
-    paths:
-      - 'kubernetes-manifests/*'
+options:
+  dynamic_substitutions: true
+
+images:
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/adservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/cartservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/checkoutservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/currencyservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/emailservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/frontend:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/loadgenerator:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/paymentservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/productcatalogservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/recommendationservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shippingservice:latest'
+- '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shoppingassistantservice:latest'
