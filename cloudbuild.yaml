@@ -1,43 +1,52 @@
-# Copyright 2020 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# [START cloudbuild_microservice_demo_cloudbuild]
-
-# This configuration file is used to build and deploy the app into a
-# GKE cluster using Google Cloud Build.
-#
-# PREREQUISITES:
-# - Cloud Build service account must have role: "Kubernetes Engine Developer"
-
-# USAGE:
-# GCP zone and GKE target cluster must be specified as substitutions
-# Example invocation:
-# `gcloud builds submit --config=cloudbuild.yaml --substitutions=_ZONE=us-central1-b,_CLUSTER=demo-app-staging .`
-
 steps:
-- id: 'Deploy application to cluster'
-  name: 'gcr.io/k8s-skaffold/skaffold:v2.13.2'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - >
-    gcloud container clusters get-credentials --zone=$_ZONE $_CLUSTER;
-    skaffold run -f=skaffold.yaml --default-repo=gcr.io/$PROJECT_ID;
+  # Step 1: Build and push Docker images for each microservice
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'src/adservice'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/adservice:$(date +%Y%m%d%H%M%S)', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'src/adservice'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/adservice:$(date +%Y%m%d%H%M%S)']
+  # Repeat for other microservices
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'src/cartservice'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/cartservice:$(date +%Y%m%d%H%M%S)', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'src/cartservice'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/cartservice:$(date +%Y%m%d%H%M%S)']
+  # Repeat for other microservices...
 
-# Add more power, and more time, for heavy Skaffold build
-timeout: '3600s'
-options:
-  machineType: 'N1_HIGHCPU_8'
-  
-# [END cloudbuild_microservice_demo_cloudbuild]
+  # Step 2: Update Kubernetes manifests with new image tags
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'sed'
+      - '-i'
+      - '-e'
+      - 's|image: us-central1-docker.pkg.dev/.*/adservice:.*|image: us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/adservice:$(date +%Y%m%d%H%M%S)|'
+      - 'kubernetes-manifests/adservice-deployment.yaml'
+  # Repeat for other microservices' deployment YAML files...
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'sed'
+      - '-i'
+      - '-e'
+      - 's|image: us-central1-docker.pkg.dev/.*/cartservice:.*|image: us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/cartservice:$(date +%Y%m%d%H%M%S)|'
+      - 'kubernetes-manifests/cartservice-deployment.yaml'
+
+  # Step 3: Apply updated Kubernetes manifests
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'kubernetes-manifests']
+    env:
+      - 'CLOUDSDK_CONTAINER_CLUSTER=my-gke-cluster'
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1'
+
+# Define the required substitutions (replace with actual values)
+substitutions:
+  _REGION: 'us-central1'
+  _REPO: 'my-docker-repo'
+
+# Specify artifacts to store the updated YAML files (optional)
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID-cloudbuild-artifacts/'
+    paths:
+      - 'kubernetes-manifests/*'
