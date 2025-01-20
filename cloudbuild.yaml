@@ -1,12 +1,18 @@
 steps:
+# Clean workspace (optional - uncomment if needed)
+# - name: 'gcr.io/cloud-builders/docker'
+#   args: ['system', 'prune', '-a', '-f']
+
 # Build and push all microservices
 - name: 'gcr.io/cloud-builders/docker'
   id: 'build-adservice'
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/adservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/adservice/Dockerfile',
-    'src/adservice'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -14,17 +20,22 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/cartservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/cartservice/Dockerfile',
-    'src/cartservice'
+    '.'
   ]
+  timeout: '1800s'  # Increased timeout for cartservice
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'build-checkoutservice'
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/checkoutservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/checkoutservice/Dockerfile',
-    'src/checkoutservice'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -32,8 +43,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/currencyservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/currencyservice/Dockerfile',
-    'src/currencyservice'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -41,8 +54,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/emailservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/emailservice/Dockerfile',
-    'src/emailservice'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -50,8 +65,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/frontend:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/frontend/Dockerfile',
-    'src/frontend'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -59,8 +76,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/loadgenerator:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/loadgenerator/Dockerfile',
-    'src/loadgenerator'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -68,8 +87,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/paymentservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/paymentservice/Dockerfile',
-    'src/paymentservice'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -77,8 +98,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/productcatalogservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/productcatalogservice/Dockerfile',
-    'src/productcatalogservice'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -86,8 +109,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/recommendationservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/recommendationservice/Dockerfile',
-    'src/recommendationservice'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -95,8 +120,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shippingservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/shippingservice/Dockerfile',
-    'src/shippingservice'
+    '.'
   ]
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -104,8 +131,10 @@ steps:
   args: [
     'build',
     '-t', '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shoppingassistantservice:latest',
+    '--no-cache',
+    '--build-arg', 'PROJECT_ID=$PROJECT_ID',
     '-f', 'src/shoppingassistantservice/Dockerfile',
-    'src/shoppingassistantservice'
+    '.'
   ]
 
 # Push all images to Artifact Registry
@@ -133,23 +162,18 @@ steps:
   - --image=${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/shoppingassistantservice:latest
   - --output=output
 
-# Deploy to GKE cluster (optional - uncomment if you want automatic deployment)
-# - name: 'gcr.io/cloud-builders/gke-deploy'
-#   args:
-#   - apply
-#   - --filename=output/expanded
-#   - --cluster=${_CLUSTER_NAME}
-#   - --location=${_CLUSTER_LOCATION}
-
 substitutions:
   _ARTIFACT_REGISTRY_LOCATION: 'us-central1'  # change this to your desired location
-  _REPOSITORY: 'my-docker-repo'                # change this to your repository name
-  _CLUSTER_NAME: 'my-gke-cluster'                 # change this if enabling GKE deployment
+  _REPOSITORY: 'my-docker-repo'               # updated to match your repository name
+  _CLUSTER_NAME: 'my-cluster'                 # change this if enabling GKE deployment
   _CLUSTER_LOCATION: 'us-central1'            # change this if enabling GKE deployment
 
 options:
   dynamic_substitutions: true
   logging: NONE
+  machineType: 'N1_HIGHCPU_8'  # Added for more build resources
+
+timeout: '3600s'  # Global timeout of 1 hour
 
 images:
 - '${_ARTIFACT_REGISTRY_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/adservice:latest'
