@@ -45,7 +45,7 @@ steps:
 
 # Define the required substitutions (replace with actual values)
 substitutions:
-  _REGION: 'global'
+  _REGION: 'us-central1'
   _REPO: 'my-docker-repo'
 
 # Specify artifacts to store the updated YAML files (optional)
